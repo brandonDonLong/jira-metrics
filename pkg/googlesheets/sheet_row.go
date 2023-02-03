@@ -1,6 +1,9 @@
 package googlesheets
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type MySheetRow struct {
 	Sprint       string `json:"Sprint"`
@@ -22,25 +25,35 @@ type GoogleSheetValues [][]interface{}
 
 func (m MySheetRowArray) Convert() GoogleSheetValues {
 
-	result := make(GoogleSheetValues, len(m))
+	// for key, value := range m {
+	// 	// fmt.Printf("\n brandon sValue: %d values: %s \n", key, value);
+	// }
 
-	i := 0
+	// result := make(GoogleSheetValues, len(m))
+
+	// i := 0
 	for _, s := range m {
 
 		// transforming the sheet struct in a generic interface array ([]interface{})
 		sValue := reflect.ValueOf(s)
 		values := make([]interface{}, sValue.NumField())
-
+		// fmt.Printf("\n brandon sValue: %s values: %s \n", sValue, values);
 		for j := 0; j < sValue.NumField(); j++ {
 			// copy struct field value into interface
+			if (j == sValue.NumField()-1){
+				fmt.Printf("%v\n", sValue.Field((j)))
+			} else {
+				fmt.Printf("%v|", sValue.Field((j)))
+			}
+
 			if sValue.Field(j).CanInterface() {
 				values[j] = sValue.Field(j).Interface()
 			}
 		}
 
-		result[i] = values
-		i++
+		// // result[i] = values
+		// i++
 	}
 
-	return result
+	return nil
 }

@@ -18,7 +18,7 @@ import (
 type serviceWrapper struct {
 	context            context.Context
 	jiraClient         *jira.Jira
-	spreadSheetsHelper helper.SpreadSheetHelper
+	// spreadSheetsHelper helper.SpreadSheetHelper
 }
 
 var all bool
@@ -54,15 +54,15 @@ Example: jira-metrics sync --year 2021 [--all | --sprint-week 41-43]`,
 			return errors.Wrap(err, "error creating JIRA client")
 		}
 
-		googleSheetsSrv, err := googlesheets.NewService(ctx,
-			"credentials.json",
-			// scope for reading
-			// "https://www.googleapis.com/auth/spreadsheets.readonly",
-			// scope to edit only an specific sheet
-			// "https://www.googleapis.com/auth/drive.file",
-			// scope for writing all sheets
-			"https://www.googleapis.com/auth/spreadsheets",
-		)
+		// googleSheetsSrv, err := googlesheets.NewService(ctx,
+		// 	"credentials.json",
+		// 	// scope for reading
+		// 	// "https://www.googleapis.com/auth/spreadsheets.readonly",
+		// 	// scope to edit only an specific sheet
+		// 	// "https://www.googleapis.com/auth/drive.file",
+		// 	// scope for writing all sheets
+		// 	"https://www.googleapis.com/auth/spreadsheets",
+		// )
 
 		if err != nil {
 			return errors.Wrap(err, "error initializing Google Sheets service")
@@ -71,7 +71,7 @@ Example: jira-metrics sync --year 2021 [--all | --sprint-week 41-43]`,
 		sv = &serviceWrapper{
 			context:            ctx,
 			jiraClient:         jc,
-			spreadSheetsHelper: helper.NewSpreadSheetHelper(googleSheetsSrv),
+			// spreadSheetsHelper: helper.NewSpreadSheetHelper(googleSheetsSrv),
 		}
 
 		return nil
@@ -139,17 +139,17 @@ Example: jira-metrics sync --year 2021 [--all | --sprint-week 41-43]`,
 		}
 
 		// Format resetting
-		spreadSheetID := viper.GetString("GOOGLE_SPREADSHEET")
-		issuesGid := viper.GetInt64("GOOGLE_SPREADSHEET_TICKETS_GID")
-		sprintListGid := viper.GetInt64("GOOGLE_SPREADSHEET_SPRINTS_GID")
+		// spreadSheetID := viper.GetString("GOOGLE_SPREADSHEET")
+		// issuesGid := viper.GetInt64("GOOGLE_SPREADSHEET_TICKETS_GID")
+		// sprintListGid := viper.GetInt64("GOOGLE_SPREADSHEET_SPRINTS_GID")
 
-		if err := sv.resetIssuesFormat(spreadSheetID, issuesGid); err != nil {
-			return err
-		}
+		// if err := sv.resetIssuesFormat(spreadSheetID, issuesGid); err != nil {
+		// 	return err
+		// }
 
-		if err := sv.resetSprintListFormat(spreadSheetID, sprintListGid); err != nil {
-			return err
-		}
+		// if err := sv.resetSprintListFormat(spreadSheetID, sprintListGid); err != nil {
+		// 	return err
+		// }
 
 		fmt.Printf("ALL DONE!\n")
 		return nil
@@ -193,33 +193,39 @@ func (sv serviceWrapper) syncSprint(sprintID, sprintName string) error {
 
 	issuesHelper := helper.NewIssuesHelper(issuesSrv)
 
-	fmt.Printf("Processing report for %s...\n", sprintName)
+	fmt.Printf("Processing report for %s...\n\n", sprintName)
 
 	allIssues, err := issuesHelper.ProcessReport(*sprintReport)
 	if err != nil {
 		return errors.Wrap(err, "error processing Sprint report")
 	}
+	fmt.Printf("Because of issues with Google; To use this now copy and paste the lines to the respective tabs\nThen go to \"Data\" and then \"Split Text Into Columns\" and use a custom seperator which in this case is this character: '|'\n\n")
 
-	fmt.Printf("Writing issues for %s in Google Sheets...\n", sprintName)
+	fmt.Printf("All the issues for %s. \n\nCopy and append to the Issues Tab:\n\n", sprintName)
 
-	if _, err := sv.spreadSheetsHelper.Append(
-		sv.context,
-		viper.GetString("GOOGLE_SPREADSHEET"),
-		viper.GetString("GOOGLE_SPREADSHEET_TICKETS_WR"),
-		allIssues.Convert(),
-	); err != nil {
-		return errors.Wrap(err, "error writing issues in GoogleSheets")
-	}
+	// if _, err := sv.spreadSheetsHelper.Append(
+	// 	sv.context,
+	// 	viper.GetString("GOOGLE_SPREADSHEET"),
+	// 	viper.GetString("GOOGLE_SPREADSHEET_TICKETS_WR"),
+	// 	allIssues.Convert(),
+	// ); err != nil {
+	// 	return errors.Wrap(err, "error writing issues in GoogleSheets")
+	// }
 
-	fmt.Printf("Adding Sprint to list %s in Google Sheets...\n", sprintName)
+	// fmt.Printf("Adding Sprint to list %s in Google Sheets...\n\n", sprintName)
+	// fmt.Printf("%s", allIssues);
+	allIssues.Convert();
+	
+	// fmt.Printf("%s", )
 
-	var sprintRows googlesheets.GoogleSheetValues = [][]interface{}{
-		{sprintName, sprintID, helper.SimplifySprintName(sprintName)},
-	}
+	// var sprintRows googlesheets.GoogleSheetValues = [][]interface{}{
+	// 	{sprintName, sprintID, helper.SimplifySprintName(sprintName)},
+	// }
+	fmt.Printf("\nSprint Rows: Copy and append to the Sprint Tab:\n\n%v|%v|%v\n\n", sprintName, sprintID, helper.SimplifySprintName(sprintName))
 
-	if err := sv.addSprintsToList(sprintRows); err != nil {
-		return errors.Wrapf(err, "errors adding Sprint %s to list", sprintName)
-	}
+	// if err := sv.addSprintsToList(sprintRows); err != nil {
+	// 	return errors.Wrapf(err, "errors adding Sprint %s to list", sprintName)
+	// }
 
 	return nil
 }
@@ -229,14 +235,14 @@ func (sv serviceWrapper) addSprintsToList(sprintRows googlesheets.GoogleSheetVal
 
 	fmt.Printf("Adding Sprints to list in Google Sheets...\n")
 
-	if _, err := sv.spreadSheetsHelper.Append(
-		sv.context,
-		viper.GetString("GOOGLE_SPREADSHEET"),
-		viper.GetString("GOOGLE_SPREADSHEET_SPRINTS_WR"),
-		sprintRows,
-	); err != nil {
-		return errors.Wrap(err, "error adding Sprints to Sprint list Google Sheets")
-	}
+	// if _, err := sv.spreadSheetsHelper.Append(
+	// 	sv.context,
+	// 	viper.GetString("GOOGLE_SPREADSHEET"),
+	// 	viper.GetString("GOOGLE_SPREADSHEET_SPRINTS_WR"),
+	// 	sprintRows,
+	// ); err != nil {
+	// 	return errors.Wrap(err, "error adding Sprints to Sprint list Google Sheets")
+	// }
 
 	return nil
 }
@@ -245,9 +251,9 @@ func (sv serviceWrapper) addSprintsToList(sprintRows googlesheets.GoogleSheetVal
 func (sv serviceWrapper) resetIssuesFormat(spreadSheetID string, gid int64) error {
 	fmt.Printf("Resetting format for issues list in Google Sheets...\n")
 
-	if _, err := sv.spreadSheetsHelper.ResetFormat(sv.context, spreadSheetID, gid, 1, 0); err != nil {
-		return errors.Wrap(err, "error resetting issues format in Google Sheets")
-	}
+	// if _, err := sv.spreadSheetsHelper.ResetFormat(sv.context, spreadSheetID, gid, 1, 0); err != nil {
+	// 	return errors.Wrap(err, "error resetting issues format in Google Sheets")
+	// }
 	return nil
 }
 
@@ -255,8 +261,8 @@ func (sv serviceWrapper) resetIssuesFormat(spreadSheetID string, gid int64) erro
 func (sv serviceWrapper) resetSprintListFormat(spreadSheetID string, gid int64) error {
 	fmt.Printf("Resetting format for Sprint list in Google Sheets...\n")
 
-	if _, err := sv.spreadSheetsHelper.ResetFormat(sv.context, spreadSheetID, gid, 1, 0); err != nil {
-		return errors.Wrap(err, "error resetting Sprint list format in Google Sheets")
-	}
+	// if _, err := sv.spreadSheetsHelper.ResetFormat(sv.context, spreadSheetID, gid, 1, 0); err != nil {
+	// 	return errors.Wrap(err, "error resetting Sprint list format in Google Sheets")
+	// }
 	return nil
 }
