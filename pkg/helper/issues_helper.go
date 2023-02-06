@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"path"
 	"regexp"
-	"strings"
 
 	"github.com/jvalecillos/jira-metrics/pkg/googlesheets"
 	"github.com/jvalecillos/jira-metrics/pkg/jira"
@@ -88,10 +87,10 @@ func (i IssuesHelper) generateRow(
 	row := googlesheets.MySheetRow{
 		Sprint:       SimplifySprintName(sprintName),
 		TicketNumber: j.Key,
-		Title:        j.Summary,
-		Link:         i.generateJiraLink(j.Key, j.Summary),
+		Title:        fmt.Sprintf("\"%s\"", j.Summary),
+		Link:         fmt.Sprintf("\"%s\"", i.generateJiraLink(j.Key, j.Summary)),
 	}
-
+	// fmt.Printf("%s", int(j.EstimateStatistic.StatFieldValue.value));
 	// If the ticket was added after starting the Sprint
 	if added {
 		// original estimation
@@ -132,9 +131,8 @@ func (i IssuesHelper) generateJiraLink(issueID, issueTitle string) string {
 	u.Path = path.Join(u.Path, issueBrowseSuffix, issueID)
 
 	return fmt.Sprintf(
-		"=HYPERLINK(\"%s\",\"%s\")",
+		"%s",
 		u.String(),
-		strings.TrimSpace(strings.ReplaceAll(issueTitle, "\"", "'")),
 	)
 }
 
